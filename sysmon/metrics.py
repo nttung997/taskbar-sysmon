@@ -17,7 +17,6 @@ class Snapshot:
     ram: float
     disk_read_mbps: float
     disk_write_mbps: float
-    disk_used_pct: float
     net_down_mbps: float
     net_up_mbps: float
     temp: float | None
@@ -38,13 +37,12 @@ class Snapshot:
         return min(100.0, (self.disk_read_mbps + self.disk_write_mbps) / reference_mbps * 100.0)
 
 
-EMPTY = Snapshot(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, None, "not polled", 0.0)
+EMPTY = Snapshot(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, None, "not polled", 0.0)
 
 
 class Sampler:
-    def __init__(self, temperature: TemperatureReader, disk_path: str = "C:\\") -> None:
+    def __init__(self, temperature: TemperatureReader) -> None:
         self._temperature = temperature
-        self._disk_path = disk_path
         self._last_net = None
         self._last_disk = None
         self._last_at: float | None = None
@@ -90,16 +88,9 @@ class Sampler:
             ram=psutil.virtual_memory().percent,
             disk_read_mbps=read,
             disk_write_mbps=write,
-            disk_used_pct=self._disk_used(),
             net_down_mbps=down,
             net_up_mbps=up,
             temp=self._temperature.value(),
             temp_source=self._temperature.source(),
             at=time.time(),
         )
-
-    def _disk_used(self) -> float:
-        try:
-            return psutil.disk_usage(self._disk_path).percent
-        except OSError:
-            return 0.0

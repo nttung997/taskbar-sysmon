@@ -19,7 +19,6 @@ def snapshot(**overrides):
         "ram": 10.0,
         "disk_read_mbps": 0.0,
         "disk_write_mbps": 0.0,
-        "disk_used_pct": 10.0,
         "net_down_mbps": 0.0,
         "net_up_mbps": 0.0,
         "temp": 40.0,
@@ -46,12 +45,10 @@ def test_default_layout_mapping():
     assert colors[2] == [IDLE, IDLE, IDLE]
 
 
-def test_disk_dot_tracks_io_not_free_space():
+def test_disk_dot_tracks_io():
     config = Config(disk_reference_mbps=800, warn=60, crit=85)
-    idle_disk = slot_colors(snapshot(disk_used_pct=99, disk_read_mbps=0), config)[0][2]
-    busy_disk = slot_colors(snapshot(disk_used_pct=5, disk_read_mbps=700), config)[0][2]
-    assert idle_disk == GREEN
-    assert busy_disk == RED
+    assert slot_colors(snapshot(disk_read_mbps=0), config)[0][2] == GREEN
+    assert slot_colors(snapshot(disk_read_mbps=700), config)[0][2] == RED
 
 
 def test_unknown_temperature_is_grey():

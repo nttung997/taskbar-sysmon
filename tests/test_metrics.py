@@ -7,7 +7,6 @@ def make(**overrides):
         "ram": 0.0,
         "disk_read_mbps": 0.0,
         "disk_write_mbps": 0.0,
-        "disk_used_pct": 0.0,
         "net_down_mbps": 0.0,
         "net_up_mbps": 0.0,
         "temp": None,

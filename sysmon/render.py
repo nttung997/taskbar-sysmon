@@ -60,9 +60,8 @@ def render_icon(snapshot: Snapshot, config: Config) -> Image.Image:
 
 def tooltip_text(snapshot: Snapshot, config: Config) -> str:
     temp = f"{snapshot.temp:.0f} C" if snapshot.temp is not None else "n/a"
-    drive = config.disk_path.rstrip("\\") or config.disk_path
     return (
-        f"CPU {snapshot.cpu:.0f}%   RAM {snapshot.ram:.0f}%   {drive} {snapshot.disk_used_pct:.0f}% used\n"
+        f"CPU {snapshot.cpu:.0f}%   RAM {snapshot.ram:.0f}%\n"
         f"Disk {snapshot.disk_read_mbps:.1f} read / {snapshot.disk_write_mbps:.1f} write MB/s\n"
         f"Net \u2193{snapshot.net_down_mbps:.1f} \u2191{snapshot.net_up_mbps:.1f} Mbps   Temp {temp}"
     )

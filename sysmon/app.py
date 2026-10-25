@@ -21,7 +21,7 @@ class SysMon:
         self.config = config
         self.config_path = config_path
         self.temperature = TemperatureReader(config.temp_poll)
-        self.sampler = Sampler(self.temperature, config.disk_path)
+        self.sampler = Sampler(self.temperature)
         self.snapshot: Snapshot = EMPTY
         self._stop = threading.Event()
         self.icon = Icon(
@@ -90,7 +90,7 @@ class SysMon:
 def _sample(config: Config) -> Snapshot:
     temperature = TemperatureReader(config.temp_poll)
     temperature.read_now()
-    sampler = Sampler(temperature, config.disk_path)
+    sampler = Sampler(temperature)
     sampler.sample()
     time.sleep(min(config.interval, 1.0))
     return sampler.sample()
@@ -126,7 +126,6 @@ def main(argv: list[str] | None = None) -> int:
                         "ram_pct": round(snapshot.ram, 1),
                         "disk_read_mbps": round(snapshot.disk_read_mbps, 2),
                         "disk_write_mbps": round(snapshot.disk_write_mbps, 2),
-                        "disk_used_pct": round(snapshot.disk_used_pct, 1),
                         "net_down_mbps": round(snapshot.net_down_mbps, 2),
                         "net_up_mbps": round(snapshot.net_up_mbps, 2),
                         "cpu_temp_c": None if snapshot.temp is None else round(snapshot.temp, 1),

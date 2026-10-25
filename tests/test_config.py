@@ -8,7 +8,7 @@ from sysmon.config import DEFAULT_LAYOUT, Config
 def test_defaults_validate():
     config = Config()
     assert config.layout == [list(row) for row in DEFAULT_LAYOUT]
-    assert config.disk_path == "C:\\"
+    assert config.warn < config.crit
 
 
 def test_missing_file_creates_default(tmp_path):
