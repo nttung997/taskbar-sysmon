@@ -28,7 +28,7 @@ def slot_colors(snapshot: Snapshot, config: Config) -> list[list[tuple[int, int,
     values = {
         "cpu": (snapshot.cpu, config.warn, config.crit),
         "ram": (snapshot.ram, config.warn, config.crit),
-        "disk": (snapshot.disk, config.warn, config.crit),
+        "disk": (snapshot.disk_load(config.disk_reference_mbps), config.warn, config.crit),
         "net": (snapshot.net_load(config.net_reference_mbps), config.warn, config.crit),
         "temp": (snapshot.temp, config.temp_warn, config.temp_crit),
     }
@@ -62,7 +62,7 @@ def tooltip_text(snapshot: Snapshot, config: Config) -> str:
     temp = f"{snapshot.temp:.0f} C" if snapshot.temp is not None else "n/a"
     drive = config.disk_path.rstrip("\\") or config.disk_path
     return (
-        f"CPU {snapshot.cpu:.0f}%   RAM {snapshot.ram:.0f}%   {drive} {snapshot.disk:.0f}%\n"
-        f"Net \u2193{snapshot.net_down_mbps:.1f} \u2191{snapshot.net_up_mbps:.1f} Mbps\n"
-        f"Temp {temp}"
+        f"CPU {snapshot.cpu:.0f}%   RAM {snapshot.ram:.0f}%   {drive} {snapshot.disk_used_pct:.0f}% used\n"
+        f"Disk {snapshot.disk_read_mbps:.1f} read / {snapshot.disk_write_mbps:.1f} write MB/s\n"
+        f"Net \u2193{snapshot.net_down_mbps:.1f} \u2191{snapshot.net_up_mbps:.1f} Mbps   Temp {temp}"
     )

@@ -26,6 +26,7 @@ class Config:
     temp_warn: float = 65.0
     temp_crit: float = 80.0
     net_reference_mbps: float = 100.0
+    disk_reference_mbps: float = 800.0
     disk_path: str = "C:\\"
     icon_size: int = 64
     temp_poll: float = 10.0

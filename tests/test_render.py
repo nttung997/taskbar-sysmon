@@ -17,10 +17,13 @@ def snapshot(**overrides):
     values = {
         "cpu": 10.0,
         "ram": 10.0,
-        "disk": 10.0,
+        "disk_read_mbps": 0.0,
+        "disk_write_mbps": 0.0,
+        "disk_used_pct": 10.0,
         "net_down_mbps": 0.0,
         "net_up_mbps": 0.0,
         "temp": 40.0,
+        "temp_source": "test sensor",
         "at": 0.0,
     }
     values.update(overrides)
@@ -36,11 +39,19 @@ def test_status_bands():
 
 
 def test_default_layout_mapping():
-    colors = slot_colors(snapshot(cpu=95, ram=70, disk=10), Config())
+    colors = slot_colors(snapshot(cpu=95, ram=70, disk_read_mbps=10), Config())
     assert colors[0] == [RED, YELLOW, GREEN]
     assert colors[1][0] == GREEN
     assert colors[1][2] == IDLE
     assert colors[2] == [IDLE, IDLE, IDLE]
+
+
+def test_disk_dot_tracks_io_not_free_space():
+    config = Config(disk_reference_mbps=800, warn=60, crit=85)
+    idle_disk = slot_colors(snapshot(disk_used_pct=99, disk_read_mbps=0), config)[0][2]
+    busy_disk = slot_colors(snapshot(disk_used_pct=5, disk_read_mbps=700), config)[0][2]
+    assert idle_disk == GREEN
+    assert busy_disk == RED
 
 
 def test_unknown_temperature_is_grey():
@@ -66,9 +77,13 @@ def test_icon_respects_configured_size():
 
 
 def test_tooltip_contains_every_metric():
-    text = tooltip_text(snapshot(cpu=12, ram=34, disk=56, temp=57), Config())
+    text = tooltip_text(
+        snapshot(cpu=12, ram=34, disk_read_mbps=5.5, disk_write_mbps=2.5, temp=57),
+        Config(),
+    )
     assert "12%" in text
     assert "34%" in text
-    assert "56%" in text
+    assert "5.5 read" in text
+    assert "2.5 write" in text
     assert "57 C" in text
     assert "n/a" in tooltip_text(snapshot(temp=None), Config())

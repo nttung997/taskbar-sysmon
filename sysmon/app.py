@@ -63,10 +63,14 @@ class SysMon:
 
     def _menu_line(self) -> str:
         snapshot = self.snapshot
-        temp = f"{snapshot.temp:.0f} C" if snapshot.temp is not None else "n/a"
+        temp = (
+            f"{snapshot.temp:.0f} C ({snapshot.temp_source})"
+            if snapshot.temp is not None
+            else "n/a"
+        )
         return (
             f"CPU {snapshot.cpu:.0f}%   RAM {snapshot.ram:.0f}%   "
-            f"Disk {snapshot.disk:.0f}%   Temp {temp}"
+            f"Disk {snapshot.disk_read_mbps:.1f}/{snapshot.disk_write_mbps:.1f} MB/s   Temp {temp}"
         )
 
     def _open_config(self) -> None:
@@ -83,13 +87,13 @@ class SysMon:
         self.temperature.stop()
 
 
-def _sample(config: Config) -> tuple[Snapshot, str]:
+def _sample(config: Config) -> Snapshot:
     temperature = TemperatureReader(config.temp_poll)
     temperature.read_now()
     sampler = Sampler(temperature, config.disk_path)
     sampler.sample()
     time.sleep(min(config.interval, 1.0))
-    return sampler.sample(), temperature.source()
+    return sampler.sample()
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -113,18 +117,20 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     if args.once or args.dump_icon:
-        snapshot, source = _sample(config)
+        snapshot = _sample(config)
         if args.once:
             print(
                 json.dumps(
                     {
                         "cpu_pct": round(snapshot.cpu, 1),
                         "ram_pct": round(snapshot.ram, 1),
-                        "disk_pct": round(snapshot.disk, 1),
+                        "disk_read_mbps": round(snapshot.disk_read_mbps, 2),
+                        "disk_write_mbps": round(snapshot.disk_write_mbps, 2),
+                        "disk_used_pct": round(snapshot.disk_used_pct, 1),
                         "net_down_mbps": round(snapshot.net_down_mbps, 2),
                         "net_up_mbps": round(snapshot.net_up_mbps, 2),
                         "cpu_temp_c": None if snapshot.temp is None else round(snapshot.temp, 1),
-                        "temp_source": source,
+                        "temp_source": snapshot.temp_source,
                     },
                     indent=2,
                 )
