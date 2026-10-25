@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import argparse
+import ctypes
 import json
 import os
 import sys
 import threading
 import time
+from ctypes import wintypes
 from pathlib import Path
 
 from pystray import Icon, Menu, MenuItem
@@ -14,6 +16,27 @@ from .config import DEFAULT_CONFIG_PATH, Config
 from .metrics import EMPTY, Sampler, Snapshot
 from .render import render_icon, tooltip_text
 from .temperature import TemperatureReader
+
+SINGLE_INSTANCE_MUTEX = "Local\\SysMon3x3"
+_mutex_handles: list[int] = []
+
+
+def acquire_single_instance(name: str = SINGLE_INSTANCE_MUTEX) -> bool:
+    """False when another process already owns the named mutex."""
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    create_mutex = kernel32.CreateMutexW
+    create_mutex.restype = wintypes.HANDLE
+    create_mutex.argtypes = (wintypes.LPVOID, wintypes.BOOL, wintypes.LPCWSTR)
+    kernel32.CloseHandle.argtypes = (wintypes.HANDLE,)
+
+    handle = create_mutex(None, False, name)
+    if not handle:
+        return True
+    if ctypes.get_last_error() == 183:  # ERROR_ALREADY_EXISTS
+        kernel32.CloseHandle(handle)
+        return False
+    _mutex_handles.append(handle)
+    return True
 
 
 class SysMon:
@@ -143,6 +166,9 @@ def main(argv: list[str] | None = None) -> int:
     if os.name != "nt":
         print("sysmon: the tray front-end targets Windows", file=sys.stderr)
         return 1
+
+    if not acquire_single_instance():
+        return 0
 
     SysMon(config, args.config).run()
     return 0

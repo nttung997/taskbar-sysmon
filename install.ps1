@@ -2,7 +2,8 @@
 [CmdletBinding()]
 param(
     [switch]$SkipAutostart,
-    [switch]$NoStart
+    [switch]$NoStart,
+    [switch]$Restart
 )
 
 $ErrorActionPreference = 'Stop'
@@ -36,6 +37,19 @@ if (-not $SkipAutostart) {
 }
 
 if (-not $NoStart) {
+    $running = Get-CimInstance Win32_Process -Filter "Name = 'pythonw.exe'" -ErrorAction SilentlyContinue |
+        Where-Object { $_.CommandLine -like "*$entry*" }
+
+    if ($running -and -not $Restart) {
+        Write-Host "SysMon is already running (PID $($running.ProcessId -join ', ')). Use -Restart to reload it."
+        return
+    }
+
+    if ($running) {
+        $running | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+        Start-Sleep -Milliseconds 500
+    }
+
     Start-Process -FilePath $pythonw -ArgumentList ('"' + $entry + '"') -WorkingDirectory $root
     Write-Host 'SysMon started - look for the 3x3 dot icon in the notification area.'
 }

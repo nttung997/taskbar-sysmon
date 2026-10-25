@@ -23,6 +23,10 @@ The script creates `.venv`, installs dependencies, drops a shortcut in your Star
 and launches the app. Use `.\install.ps1 -NoStart` to skip the launch or
 `-SkipAutostart` to skip the shortcut.
 
+Re-running the script is safe: if SysMon is already running it says so and does not start a
+second copy. Pass `-Restart` to stop the running instance and start the new code. The app
+also holds a named mutex, so launching `run.pyw` twice still gives you one tray icon.
+
 Remove it again with `.\uninstall.ps1`.
 
 Requirements: Windows 10/11 and Python 3.10+.
